@@ -1,0 +1,500 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" type="image/png" href="Old/img/favicon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/svg+xml" href="Old/img/favicon.svg" />
+    <link rel="shortcut icon" href="Old/img/favicon.ico" />
+    <link rel="apple-touch-icon" sizes="180x180" href="Old/img/apple-touch-icon.png" />
+    <link rel="manifest" href="Old/img/site.webmanifest" />
+    <title>24i - Email Signature Generator</title>
+    <style>
+      /* layout */
+      body { margin: 0; font-family: Inter, Helvetica, sans-serif; }
+      .app { display: flex; min-height: 100vh;}
+      .left { width: 340px; padding: 35px; box-sizing: border-box; border-right: 1px solid #e5e5e5;  background:#efefef;  }
+      .right { flex: 1; padding: 35px; box-sizing: border-box; }
+      .group { margin-bottom: 18px; }
+      .group label { display: block; font-size: 12px; color: #333; margin-bottom: 4px; }
+      .group input { width: 100%; box-sizing: border-box; padding: 8px; font-size: 14px; border: 1px solid #d0d0d0; border-radius: 4px; }
+      .row { display: flex; gap: 8px; }
+      .row .group { flex: 1; }
+      .buttons { display: flex; gap: 8px; margin-top: 8px; }
+      button { padding: 8px 12px; font-size: 14px; border: 1px solid #d0d0d0; background: #fafafa; border-radius: 4px; cursor: pointer; }
+      button.primary { background: #111; color: #fff; border-color: #111; }
+      button.secondary { background: transparent; color: #555; border-color: transparent; padding: 8px 4px; text-decoration: underline; }
+      button.secondary:hover { color: #111; }
+      .preview-wrap { display: grid; grid-template-columns: 1fr; gap: 12px; }
+      .preview { padding: 12px; border: 1px dashed #cfcfcf; background: #fff; overflow:auto; }
+      .html-block { margin-top: 28px; display: flex; flex-direction: column; gap: 4px; }
+      .html-block .buttons { margin-top: 0; }
+      .code { width: 100%; height: 180px; box-sizing: border-box; padding: 8px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; font-size: 12px; border: 1px solid #d0d0d0; border-radius: 4px; }
+      /* how-to section */
+      .howto { margin-top: 16px; border: 1px solid #d0d0d0; border-radius: 6px; background: #fff; }
+      .howto .toggle { width: 100%; text-align: left; display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 10px 12px; background: #fafafa; border: 0; border-bottom: 1px solid #e5e5e5; cursor: pointer; font-size: 14px; }
+      .howto .toggle:after { content: '\25BC'; font-size: 12px; opacity: 0.7; }
+      .howto[aria-expanded="true"] .toggle:after { content: '\25B2'; }
+      .howto .content { display: none; padding: 12px; }
+      .howto[aria-expanded="true"] .content { display: block; }
+      .howto .tabs { display: flex; gap: 6px; border-bottom: 1px solid #eee; margin-bottom: 10px; }
+      .howto .tabs button { border: 1px solid #d0d0d0; background: #f6f6f6; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-size: 13px; }
+      .howto .tabs button[aria-selected="true"] { background: #111; color: #fff; border-color: #111; }
+      .howto .panel { display: none; font-size: 14px; line-height: 1.45; }
+      .howto .panel.active { display: block; }
+      .howto ul { margin: 0; padding-left: 18px; }
+      .howto li { margin: 6px 0; }
+      @media (max-width: 860px) { .app { flex-direction: column; } .left { width: 100%; border-right: 0; border-bottom: 1px solid #e5e5e5; } }
+    </style>
+  </head>
+  <body>
+    <div class="app">
+      <div class="left">
+        <div class="group">
+          <label for="firstName">First name</label>
+          <input id="firstName" type="text" value="F." />
+        </div>
+        <div class="group">
+          <label for="lastName">Last name</label>
+          <input id="lastName" type="text" value="Baggins" />
+        </div>
+        <div class="group">
+          <label for="role">Role / Position</label>
+          <input id="role" type="text" value="Ring Bearer" />
+        </div>
+        <div class="group">
+          <label for="phone">Phone</label>
+          <input id="phone" type="text" value="+00 123 444 555" />
+        </div>
+        <div class="group">
+          <label for="email">Email</label>
+          <input id="email" type="email" value="name@twentyfour.industries" />
+        </div>
+        <div class="group">
+          <label for="website">Website</label>
+          <input id="website" type="text" value="twentyfour.industries" />
+        </div>
+        <div class="buttons">
+          <button id="generate" class="primary">Generate</button>
+          <button id="reset">Reset</button>
+        </div>
+      </div>
+      <div class="right">
+        <div class="preview-wrap">
+          <div class="preview" id="preview"></div>
+          <div class="buttons">
+            <button id="copySignature" class="primary">Copy Signature</button>
+          </div>
+          <div class="html-block">
+            <textarea readonly id="code" class="code"></textarea>
+            <div class="buttons">
+              <button id="copy" class="secondary">Copy HTML</button>
+            </div>
+          </div>
+          <div id="howto" class="howto" aria-expanded="false">
+            <button id="howtoToggle" class="toggle">How to use this?</button>
+            <div class="content">
+              <div class="tabs" role="tablist" aria-label="Email client instructions">
+                <button role="tab" id="tab-outlook" aria-controls="panel-outlook" aria-selected="true">Outlook</button>
+                <button role="tab" id="tab-gmail" aria-controls="panel-gmail" aria-selected="false">Gmail</button>
+                <button role="tab" id="tab-apple" aria-controls="panel-apple" aria-selected="false">Apple Mail</button>
+              </div>
+              <div id="panel-outlook" class="panel active" role="tabpanel" aria-labelledby="tab-outlook">
+                <ul>
+                  <li>Click the <strong>Copy Signature</strong> button above &mdash; it copies the formatted signature, ready to paste.</li>
+                  <li>In Outlook (Web): Settings &rarr; Mail &rarr; Compose and reply &rarr; Email signature.</li>
+                  <li>In Outlook (Desktop): File &rarr; Options &rarr; Accounts &rarr; Signatures.</li>
+                  <li>Create a new signature, paste (Ctrl+V / Cmd+V) and save.</li>
+                  <li>Set it as default for new messages and replies.</li>
+                  <li>More help: <a href="https://support.microsoft.com/office/create-and-add-an-email-signature-8ee5d4f4-68fd-464a-a1c1-0e1c80bb27f2" target="_blank" rel="noreferrer noopener">Outlook signature help</a></li>
+                </ul>
+              </div>
+              <div id="panel-gmail" class="panel" role="tabpanel" aria-labelledby="tab-gmail" hidden>
+                <ul>
+                  <li>Click the <strong>Copy Signature</strong> button above &mdash; it copies the formatted signature, ready to paste.</li>
+                  <li>Open Gmail &rarr; Settings (gear icon) &rarr; See all settings &rarr; General.</li>
+                  <li>Scroll to "Signature" and click "+ Create new".</li>
+                  <li>Paste (Ctrl+V / Cmd+V) into the signature editor and save.</li>
+                  <li>Assign it for new emails and replies/forwards.</li>
+                  <li>More help: <a href="https://support.google.com/mail/answer/8395" target="_blank" rel="noreferrer noopener">Gmail signature help</a></li>
+                </ul>
+              </div>
+              <div id="panel-apple" class="panel" role="tabpanel" aria-labelledby="tab-apple" hidden>
+                <ul>
+                  <li>Click the <strong>Copy Signature</strong> button above &mdash; it copies the formatted signature, ready to paste.</li>
+                  <li>Open Apple Mail &rarr; Mail &rarr; Settings &rarr; Signatures.</li>
+                  <li>Create a new signature, then paste (Cmd+V) into the right pane.</li>
+                  <li>Uncheck "Always match my default message font" so the formatting is preserved.</li>
+                  <li>Assign the signature to your account.</li>
+                  <li>More help: <a href="https://support.apple.com/guide/mail/write-and-format-email-signatures-mlhlp1011/mac" target="_blank" rel="noreferrer noopener">Apple Mail signature help</a></li>
+                </ul>
+              </div>
+              <p style="margin: 10px 0 0; padding-top: 10px; border-top: 1px solid #eee; font-size: 12px; color: #777;">
+                <strong>Power users:</strong> if your client expects raw HTML (or pasting strips formatting), use the HTML code box above and the "Copy HTML" button instead.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <template id="signature-template">
+      <table
+        cellpadding="0"
+        cellspacing="0"
+        border="0"
+        style="vertical-align: -webkit-baseline-middle; font-size: medium; font-family: Inter, Helvetica, sans-serif;"
+      >
+        <tbody>
+          <tr>
+            <td>
+              <table
+                cellpadding="0"
+                cellspacing="0"
+                border="0"
+                style="vertical-align: -webkit-baseline-middle; font-size: medium; font-family: Inter, Helvetica, sans-serif;"
+              >
+                <tbody>
+                  <tr>
+                    <td style="padding: 0px; vertical-align: middle;">
+                      <table cellpadding="0" cellspacing="0" border="0" style="vertical-align: -webkit-baseline-middle; font-size: medium; font-family: Inter, Helvetica, sans-serif;">
+                        <tbody>
+                          <tr>
+                            <td style="vertical-align: top; padding-right: 10px;">
+                              <img src="https://cdn.jsdelivr.net/gh/hans-georgripken-source/twentyfour.industries.public@main/24i_Logo_short_black.png" alt="24 Industries" width="38" style="display: block;" />
+                            </td>
+                            <td style="vertical-align: middle;">
+                              <h2
+                                style="margin: 0px; font-size: 12pt; font-family: Inter, Helvetica, sans-serif; color: rgb(0, 0, 0); font-weight: 700; line-height: 16pt; mso-line-height-rule: exactly;"
+                              >
+                                <span class="first-name" data-field="firstName">F.</span><span>&nbsp;</span><span class="last-name" data-field="lastName">Baggins</span>
+                              </h2>
+                              <p
+                                style="margin: 0px; font-family: Inter, Helvetica, sans-serif; color: rgb(0, 0, 0); font-size: 11pt; line-height: 15pt; mso-line-height-rule: exactly;"
+                              >
+                                <span class="role_position" data-field="role">Ring Bearer</span>
+                              </p>
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+
+
+                      <table
+                        cellpadding="0"
+                        cellspacing="0"
+                        border="0"
+                        width="100%"
+                        style="font-family: Inter, Helvetica, sans-serif; width: 100%; border-collapse: collapse;"
+                      >
+                        <tbody>
+                          <tr>
+                            <td style="height: 14px; line-height: 14px; font-size: 0;" height="14">&#160;</td>
+                          </tr>
+                          <tr>
+                            <td style="height: 1px; line-height: 1px; font-size: 0; background-color: rgb(77, 77, 77); mso-line-height-rule: exactly;" height="1" bgcolor="#4d4d4d">&#160;</td>
+                          </tr>
+                          <tr>
+                            <td style="height: 12px; line-height: 12px; font-size: 0;" height="12">&#160;</td>
+                          </tr>
+                        </tbody>
+                      </table>
+
+                      <table
+                        cellpadding="0"
+                        cellspacing="0"
+                        border="0"
+                        style="vertical-align: -webkit-baseline-middle; font-size: medium; font-family: Inter, Helvetica, sans-serif; line-height: 1;"
+                      >
+                        <tbody>
+                          <tr data-row="phone">
+                            <td style="font-size: 12px; line-height: 22px; padding: 0 10px 0 0; color: rgb(0, 0, 0); font-weight: 600; white-space: nowrap; vertical-align: middle;">Phone:</td>
+                            <td style="font-size: 12px; line-height: 22px; padding: 0px; color: rgb(0, 0, 0); vertical-align: middle;">
+                              <a href="tel:+00123444555" style="text-decoration: none; color: rgb(0, 0, 0); -webkit-text-fill-color: rgb(0, 0, 0); font-size: 12px;"><span data-field="phone" style="color: rgb(0, 0, 0); -webkit-text-fill-color: rgb(0, 0, 0); text-decoration: none;">+00 123 444 555</span></a>
+                            </td>
+                          </tr>
+
+                          <tr data-row="email">
+                            <td style="font-size: 12px; line-height: 22px; padding: 0 10px 0 0; color: rgb(0, 0, 0); font-weight: 600; white-space: nowrap; vertical-align: middle;">Email:</td>
+                            <td style="font-size: 12px; line-height: 22px; padding: 0px; color: rgb(0, 0, 0); vertical-align: middle;">
+                              <a href="mailto:name@twentyfour.industries" style="text-decoration: underline; color: rgb(0, 0, 0); -webkit-text-fill-color: rgb(0, 0, 0); font-size: 12px;"><span data-field="email" style="color: rgb(0, 0, 0); -webkit-text-fill-color: rgb(0, 0, 0); text-decoration: underline;">name@twentyfour.industries</span></a>
+                            </td>
+                          </tr>
+
+                          <tr data-row="website">
+                            <td style="font-size: 12px; line-height: 22px; padding: 0 10px 0 0; color: rgb(0, 0, 0); font-weight: 600; white-space: nowrap; vertical-align: middle;">Website:</td>
+                            <td style="font-size: 12px; line-height: 22px; padding: 0px; color: rgb(0, 0, 0); vertical-align: middle;">
+                              <a href="https://twentyfour.industries" style="text-decoration: underline; color: rgb(0, 0, 0); -webkit-text-fill-color: rgb(0, 0, 0); font-size: 12px;"><span data-field="website" style="color: rgb(0, 0, 0); -webkit-text-fill-color: rgb(0, 0, 0); text-decoration: underline;">twentyfour.industries</span></a>
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+
+                      <table
+                        cellpadding="0"
+                        cellspacing="0"
+                        border="0"
+                        style="vertical-align: -webkit-baseline-middle; font-size: medium; font-family: Inter, Helvetica, sans-serif;"
+                      >
+                        <tbody>
+                          <tr>
+                            <td height="16" aria-label="Horizontal Spacer"></td>
+                          </tr>
+                        </tbody>
+                      </table>
+
+
+                      <table
+                        cellpadding="0"
+                        cellspacing="0"
+                        border="0"
+                        style="vertical-align: -webkit-baseline-middle; font-size: medium; font-family: Inter, Helvetica, sans-serif;"
+                      >
+                        <tbody>
+                          <tr>
+                            <td style="max-width: 360px; font-size: 11px; line-height: 16px; color: rgb(102, 102, 102);">
+                              Twentyfour Industries GmbH, Local Court Munich, HRB 298664
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </template>
+
+    <script>
+      function sanitizeTel(value) {
+        return (value || '').toString().replace(/[^+\d]/g, '');
+      }
+
+      function normalizeWebsite(value) {
+        if (!value) return '';
+        const v = value.trim();
+        if (/^https?:\/\//i.test(v)) return v;
+        if (/^\/\//.test(v)) return 'https:' + v;
+        return 'https://' + v;
+      }
+
+      function setText(el, text) {
+        if (!el) return;
+        el.textContent = text;
+      }
+
+      function removeRow(root, rowKey) {
+        const row = root.querySelector('[data-row="' + rowKey + '"]');
+        if (row && row.parentNode) row.parentNode.removeChild(row);
+      }
+
+      function generateSignatureHTML(state) {
+        const tpl = document.getElementById('signature-template');
+        const frag = tpl.content.cloneNode(true);
+        const root = frag;
+
+        // Name and role
+        setText(root.querySelector('[data-field="firstName"]'), state.firstName || '');
+        setText(root.querySelector('[data-field="lastName"]'), state.lastName || '');
+        if (state.role) {
+          setText(root.querySelector('[data-field="role"]'), state.role);
+        } else {
+          const roleEl = root.querySelector('[data-field="role"]').closest('p');
+          if (roleEl && roleEl.parentNode) roleEl.parentNode.removeChild(roleEl);
+        }
+
+        // Phone
+        const phone = (state.phone || '').trim();
+        if (!phone) {
+          removeRow(root, 'phone');
+        } else {
+          setText(root.querySelector('[data-field="phone"]'), phone);
+          const phoneLink = root.querySelector('[data-row="phone"] a');
+          if (phoneLink) phoneLink.setAttribute('href', 'tel:' + sanitizeTel(phone));
+        }
+
+        // Email
+        if (!state.email) {
+          removeRow(root, 'email');
+        } else {
+          setText(root.querySelector('[data-field="email"]'), state.email);
+          const emailLink = root.querySelector('[data-row="email"] a');
+          if (emailLink) emailLink.setAttribute('href', 'mailto:' + state.email);
+        }
+
+        // Website
+        if (!state.website) {
+          removeRow(root, 'website');
+        } else {
+          setText(root.querySelector('[data-field="website"]'), state.website);
+          const websiteLink = root.querySelector('[data-row="website"] a');
+          if (websiteLink) websiteLink.setAttribute('href', normalizeWebsite(state.website));
+        }
+
+        const container = document.createElement('div');
+        container.appendChild(frag);
+        return container.innerHTML;
+      }
+
+      function readState() {
+        return {
+          firstName: document.getElementById('firstName').value.trim(),
+          lastName: document.getElementById('lastName').value.trim(),
+          role: document.getElementById('role').value.trim(),
+          phone: document.getElementById('phone').value,
+          email: document.getElementById('email').value.trim(),
+          website: document.getElementById('website').value.trim()
+        };
+      }
+
+      function update() {
+        const html = generateSignatureHTML(readState());
+        const preview = document.getElementById('preview');
+        const code = document.getElementById('code');
+        preview.innerHTML = html;
+        code.value = html;
+      }
+
+      const DEFAULTS = {
+        firstName: 'F.',
+        lastName: 'Baggins',
+        role: 'Ring Bearer',
+        phone: '+00 123 444 555',
+        email: 'name@twentyfour.industries',
+        website: 'twentyfour.industries'
+      };
+
+      function applyDefaults() {
+        Object.entries(DEFAULTS).forEach(function ([k, v]) {
+          const el = document.getElementById(k);
+          if (el) el.value = v;
+        });
+      }
+
+      document.getElementById('generate').addEventListener('click', function () {
+        update();
+      });
+
+      document.getElementById('reset').addEventListener('click', function () {
+        applyDefaults();
+        update();
+      });
+
+      function flashCopied(btn) {
+        const originalText = btn.dataset.originalText || btn.textContent;
+        btn.dataset.originalText = originalText;
+        btn.textContent = 'Copied!';
+        clearTimeout(btn._flashTimer);
+        btn._flashTimer = setTimeout(function () {
+          btn.textContent = originalText;
+        }, 1500);
+      }
+
+      function copyPreviewFallback(preview) {
+        const range = document.createRange();
+        range.selectNodeContents(preview);
+        const selection = window.getSelection();
+        selection.removeAllRanges();
+        selection.addRange(range);
+        let ok = false;
+        try { ok = document.execCommand('copy'); } catch (e) {}
+        selection.removeAllRanges();
+        return ok;
+      }
+
+      document.getElementById('copySignature').addEventListener('click', async function () {
+        const preview = document.getElementById('preview');
+        const html = preview.innerHTML;
+        const text = preview.innerText || preview.textContent || '';
+        try {
+          if (navigator.clipboard && window.ClipboardItem) {
+            const item = new ClipboardItem({
+              'text/html': new Blob([html], { type: 'text/html' }),
+              'text/plain': new Blob([text], { type: 'text/plain' })
+            });
+            await navigator.clipboard.write([item]);
+          } else {
+            copyPreviewFallback(preview);
+          }
+          flashCopied(this);
+        } catch (e) {
+          if (copyPreviewFallback(preview)) flashCopied(this);
+        }
+      });
+
+      document.getElementById('copy').addEventListener('click', async function () {
+        const code = document.getElementById('code');
+        code.select();
+        code.setSelectionRange(0, code.value.length);
+        try {
+          await navigator.clipboard.writeText(code.value);
+        } catch (e) {
+          document.execCommand('copy');
+        }
+        flashCopied(this);
+      });
+
+      // how-to toggle and tabs
+      (function () {
+        var howto = document.getElementById('howto');
+        var toggle = document.getElementById('howtoToggle');
+        if (toggle && howto) {
+          toggle.addEventListener('click', function () {
+            var isOpen = howto.getAttribute('aria-expanded') === 'true';
+            howto.setAttribute('aria-expanded', isOpen ? 'false' : 'true');
+          });
+        }
+        var tabs = Array.prototype.slice.call(document.querySelectorAll('.howto [role="tab"]'));
+        var panels = {
+          gmail: document.getElementById('panel-gmail'),
+          outlook: document.getElementById('panel-outlook'),
+          apple: document.getElementById('panel-apple')
+        };
+        function activateTab(tabId) {
+          tabs.forEach(function (t) {
+            var selected = t.id === tabId;
+            t.setAttribute('aria-selected', selected ? 'true' : 'false');
+          });
+          Object.keys(panels).forEach(function (k) {
+            var panel = panels[k];
+            if (!panel) return;
+            var shouldShow = ('tab-' + k) === tabId;
+            panel.classList.toggle('active', shouldShow);
+            if (shouldShow) {
+              panel.removeAttribute('hidden');
+            } else {
+              panel.setAttribute('hidden', '');
+            }
+          });
+        }
+        tabs.forEach(function (t) {
+          t.addEventListener('click', function () {
+            activateTab(t.id);
+          });
+          t.addEventListener('keydown', function (e) {
+            var idx = tabs.indexOf(t);
+            if (e.key === 'ArrowRight') {
+              e.preventDefault();
+              var next = tabs[(idx + 1) % tabs.length];
+              next.focus();
+              activateTab(next.id);
+            } else if (e.key === 'ArrowLeft') {
+              e.preventDefault();
+              var prev = tabs[(idx - 1 + tabs.length) % tabs.length];
+              prev.focus();
+              activateTab(prev.id);
+            }
+          });
+        });
+      })();
+
+      // initial render with defaults
+      applyDefaults();
+      update();
+    </script>
+  </body>
+  </html>
+                                                                                         
