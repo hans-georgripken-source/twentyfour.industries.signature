@@ -27,8 +27,6 @@
       button.secondary:hover { color: #111; }
       .preview-wrap { display: grid; grid-template-columns: 1fr; gap: 12px; }
       .preview { padding: 12px; border: 1px dashed #cfcfcf; background: #fff; overflow:auto; }
-      .html-block { margin-top: 28px; display: flex; flex-direction: column; gap: 4px; }
-      .html-block .buttons { margin-top: 0; }
       .code { width: 100%; height: 180px; box-sizing: border-box; padding: 8px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; font-size: 12px; border: 1px solid #d0d0d0; border-radius: 4px; }
       /* how-to section */
       .howto { margin-top: 16px; border: 1px solid #d0d0d0; border-radius: 6px; background: #fff; }
@@ -85,12 +83,6 @@
           <div class="buttons">
             <button id="copySignature" class="primary">Copy Signature</button>
           </div>
-          <div class="html-block">
-            <textarea readonly id="code" class="code"></textarea>
-            <div class="buttons">
-              <button id="copy" class="secondary">Copy HTML</button>
-            </div>
-          </div>
           <div id="howto" class="howto" aria-expanded="false">
             <button id="howtoToggle" class="toggle">How to use this?</button>
             <div class="content">
@@ -130,8 +122,17 @@
                 </ul>
               </div>
               <p style="margin: 10px 0 0; padding-top: 10px; border-top: 1px solid #eee; font-size: 12px; color: #777;">
-                <strong>Power users:</strong> if your client expects raw HTML (or pasting strips formatting), use the HTML code box above and the "Copy HTML" button instead.
+                <strong>Power users:</strong> if your client expects raw HTML (or pasting strips formatting), expand the "Need the raw HTML?" section below and use the "Copy HTML" button instead.
               </p>
+            </div>
+          </div>
+          <div id="htmlcode" class="howto" aria-expanded="false">
+            <button id="htmlcodeToggle" class="toggle">Need the raw HTML?</button>
+            <div class="content">
+              <textarea readonly id="code" class="code"></textarea>
+              <div class="buttons">
+                <button id="copy" class="secondary">Copy HTML</button>
+              </div>
             </div>
           </div>
         </div>
@@ -445,6 +446,14 @@
           toggle.addEventListener('click', function () {
             var isOpen = howto.getAttribute('aria-expanded') === 'true';
             howto.setAttribute('aria-expanded', isOpen ? 'false' : 'true');
+          });
+        }
+        var htmlcode = document.getElementById('htmlcode');
+        var htmlcodeToggle = document.getElementById('htmlcodeToggle');
+        if (htmlcodeToggle && htmlcode) {
+          htmlcodeToggle.addEventListener('click', function () {
+            var isOpen = htmlcode.getAttribute('aria-expanded') === 'true';
+            htmlcode.setAttribute('aria-expanded', isOpen ? 'false' : 'true');
           });
         }
         var tabs = Array.prototype.slice.call(document.querySelectorAll('.howto [role="tab"]'));
